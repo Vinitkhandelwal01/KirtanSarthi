@@ -89,12 +89,6 @@ If frontend and backend are on different domains, set:
 
 - `REACT_APP_BASE_URL=https://api.your-domain.com/api/v1`
 
-## Security Notes
-
-- Never commit real `.env` values.
-- Rotate secrets immediately if exposed.
-- Use HTTPS in production (required for secure cookies and reliable geolocation behavior).
-
 ## Main Scripts
 
 ### Backend
