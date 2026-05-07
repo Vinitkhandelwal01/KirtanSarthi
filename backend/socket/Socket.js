@@ -75,7 +75,7 @@ module.exports = (server) => {
     try {
       const authToken = socket.handshake.auth?.token || null;
       const cookieToken = parseCookieToken(socket.handshake.headers?.cookie || "");
-      const token = authToken || cookieToken;
+      const token = cookieToken || authToken;
       if (!token) {
         return next(new Error("Unauthorized"));
       }
