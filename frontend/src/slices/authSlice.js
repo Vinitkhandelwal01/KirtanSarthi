@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+const persistedToken = localStorage.getItem("token") || null;
 const persistedUser = (() => {
   try {
     return JSON.parse(localStorage.getItem("user"));
@@ -11,9 +12,9 @@ const persistedUser = (() => {
 const initialState = {
   signupData: null,
   loading: false,
-  token: null,
+  token: persistedToken,
   user: persistedUser,
-  resolved: false,
+  resolved: !persistedToken,
 };
 
 const authSlice = createSlice({

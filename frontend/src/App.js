@@ -80,10 +80,10 @@ function ArtistApprovalGate({ children }) {
 
 function ProtectedRoute({ children }) {
   const location = useLocation();
-  const { user, resolved } = useAuth();
+  const { user, token, resolved } = useAuth();
   const { t } = useTranslation();
 
-  if (!resolved) {
+  if (token && !resolved) {
     return (
       <div className="main-content text-center" style={{ padding: "4rem" }}>
         <span className="spinner" /> {t("app_loading")}
@@ -91,7 +91,7 @@ function ProtectedRoute({ children }) {
     );
   }
 
-  if (!user) {
+  if (!token || !user) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
@@ -99,15 +99,17 @@ function ProtectedRoute({ children }) {
 }
 
 function App() {
-  const { refreshUser, logout } = useAuth();
+  const { token, refreshUser, logout } = useAuth();
 
   useEffect(() => {
+    if (!token) return;
+
     refreshUser().catch((err) => {
       if (err?.status === 401) {
         logout({ silent: true });
       }
     });
-  }, [refreshUser, logout]);
+  }, [token, refreshUser, logout]);
 
   return (
     <>

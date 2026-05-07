@@ -216,6 +216,7 @@ export default function AIChat() {
 
     /* Send the first shown artist as context so backend knows who "this artist" refers to */
     const selectedArtistId = lastArtists[0]?._id || undefined;
+    const token = localStorage.getItem("token");
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -225,6 +226,7 @@ export default function AIChat() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
         body: JSON.stringify({ message: content, history, selectedArtistId }),

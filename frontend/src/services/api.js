@@ -1,11 +1,37 @@
 import axios from "axios";
 
-export const API_BASE_URL = process.env.REACT_APP_BASE_URL || "/api/v1";
+const normalizeApiBaseUrl = (rawValue) => {
+  const fallback = "/api/v1";
+  if (!rawValue) return fallback;
+
+  let value = String(rawValue).trim();
+
+  // Guard against misconfigured env value like:
+  // "REACT_APP_BASE_URL=https://example.com/api/v1"
+  if (value.startsWith("REACT_APP_BASE_URL=")) {
+    value = value.slice("REACT_APP_BASE_URL=".length).trim();
+  }
+
+  if (!value) return fallback;
+
+  // Remove accidental trailing slash for stable URL joining
+  return value.replace(/\/+$/, "");
+};
+
+export const API_BASE_URL = normalizeApiBaseUrl(process.env.REACT_APP_BASE_URL);
 export const SOCKET_URL = API_BASE_URL.replace(/\/api\/v1\/?$/, "");
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
+});
+
+axiosInstance.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 axiosInstance.interceptors.response.use(

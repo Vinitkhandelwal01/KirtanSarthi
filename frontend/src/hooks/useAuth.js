@@ -9,9 +9,10 @@ export default function useAuth() {
   const dispatch = useDispatch();
   const { user, token, resolved } = useSelector((state) => state.auth);
 
-  const persistAuth = useCallback((nextUser) => {
+  const persistAuth = useCallback((nextToken, nextUser) => {
+    localStorage.setItem("token", nextToken);
     localStorage.setItem("user", JSON.stringify(nextUser));
-    dispatch(setToken(null));
+    dispatch(setToken(nextToken));
     dispatch(setUser(nextUser));
     dispatch(setResolved(true));
   }, [dispatch]);
@@ -19,14 +20,14 @@ export default function useAuth() {
   const login = useCallback(async (email, password) => {
     disconnectSocket();
     const res = await authAPI.login({ email, password });
-    persistAuth(res.user);
+    persistAuth(res.token, res.user);
     return res;
   }, [persistAuth]);
 
   const signup = useCallback(async (payload) => {
     const res = await authAPI.signup(payload);
-    if (res?.user) {
-      persistAuth(res.user);
+    if (res?.token && res?.user) {
+      persistAuth(res.token, res.user);
     }
     return res;
   }, [persistAuth]);
@@ -53,6 +54,7 @@ export default function useAuth() {
 
   const logout = useCallback(({ silent = false } = {}) => {
     disconnectSocket();
+    localStorage.removeItem("token");
     localStorage.removeItem("user");
     dispatch(clearAuth());
     if (!silent) {
@@ -74,6 +76,7 @@ export default function useAuth() {
     } catch (error) {
       if (error?.status === 401) {
         disconnectSocket();
+        localStorage.removeItem("token");
         localStorage.removeItem("user");
         dispatch(clearAuth());
         return null;
