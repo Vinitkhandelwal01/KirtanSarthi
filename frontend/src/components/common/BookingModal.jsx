@@ -13,7 +13,7 @@ import {
 
 export default function BookingModal({ artist, onClose, onSuccess }) {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { t } = useLang();
   const name = artistDisplayName(artist);
   const today = new Date();
@@ -179,6 +179,35 @@ export default function BookingModal({ artist, onClose, onSuccess }) {
     setLoading(true);
 
     try {
+      const resolveUserCoords = async () => {
+        const currentCoords = Array.isArray(user?.location?.coordinates) && user.location.coordinates.length === 2
+          ? user.location.coordinates.map(Number)
+          : null;
+        const hasCurrentCoords =
+          currentCoords &&
+          Number.isFinite(currentCoords[0]) &&
+          Number.isFinite(currentCoords[1]);
+
+        if (hasCurrentCoords) return currentCoords;
+
+        try {
+          const refreshedUser = await refreshUser();
+          const refreshedCoords = Array.isArray(refreshedUser?.location?.coordinates) && refreshedUser.location.coordinates.length === 2
+            ? refreshedUser.location.coordinates.map(Number)
+            : null;
+          const hasRefreshedCoords =
+            refreshedCoords &&
+            Number.isFinite(refreshedCoords[0]) &&
+            Number.isFinite(refreshedCoords[1]);
+
+          if (hasRefreshedCoords) return refreshedCoords;
+        } catch {
+          // Ignore profile refresh failures and continue with address-based geocoding.
+        }
+
+        return null;
+      };
+
       const selectedSlot = slots[form.slotIndex];
       const bookingData = {
         artistId: artist._id,
@@ -189,6 +218,12 @@ export default function BookingModal({ artist, onClose, onSuccess }) {
       };
 
       if (needsEvent) {
+        const userCoords = await resolveUserCoords();
+        const hasValidUserCoords =
+          userCoords &&
+          Number.isFinite(userCoords[0]) &&
+          Number.isFinite(userCoords[1]);
+
         bookingData.eventDetails = {
           title: form.evTitle,
           eventType: form.evType,
@@ -196,6 +231,14 @@ export default function BookingModal({ artist, onClose, onSuccess }) {
           city: form.evCity,
           address: form.evAddress,
           date: form.evDate || form.date,
+          ...(hasValidUserCoords
+            ? {
+                location: {
+                  type: "Point",
+                  coordinates: userCoords,
+                },
+              }
+            : {}),
         };
       }
 

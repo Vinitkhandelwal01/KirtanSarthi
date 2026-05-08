@@ -417,7 +417,7 @@ export default function Chat() {
 
   useEffect(() => {
     const onResize = () => {
-      if (window.innerWidth > 700) {
+      if (window.innerWidth > 768) {
         setMobileListOpen(true);
       }
     };
@@ -559,7 +559,7 @@ export default function Chat() {
       delete next[id];
       return next;
     });
-    if (window.innerWidth <= 700) {
+    if (window.innerWidth <= 768) {
       setMobileListOpen(false);
     }
   };
@@ -723,7 +723,7 @@ export default function Chat() {
           ))}
         </div>
 
-        <div className="chat-main">
+        <div className={`chat-main${mobileListOpen ? " mobile-hidden" : ""}`}>
           {current && (
             <div className="chat-header">
               <button

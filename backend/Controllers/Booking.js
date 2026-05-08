@@ -203,24 +203,45 @@ const createEventFromBooking = async (booking) => {
     }
 
     if (!isValidPoint(location)) {
-      console.log("createEventFromBooking: Could not resolve exact location for booking event", booking._id);
-      return null;
+      try {
+        const hostUser = await User.findById(booking.user).select("location");
+        if (isValidPoint(hostUser?.location)) {
+          location = hostUser.location;
+          console.warn(
+            `createEventFromBooking: Using host profile location fallback for booking ${booking._id}`
+          );
+        }
+      } catch (hostLookupError) {
+        console.error("createEventFromBooking: host location fallback failed:", hostLookupError.message);
+      }
     }
 
-    const event = await Event.create({
+    if (!isValidPoint(location)) {
+      console.warn(
+        `createEventFromBooking: Could not resolve exact location for booking event ${booking._id}; saving without geo point`
+      );
+      location = null;
+    }
+
+    const eventData = {
       title: details.title,
       eventType: details.eventType,
       god: details.god,
       city,
       address: details.address,
       dateTime: eventDateTime,
-      location,
       visibility: "PUBLIC",
       artist: artist._id,
       host: booking.user,
       booking: booking._id,
       createdBy: "USER",
-    });
+    };
+
+    if (isValidPoint(location)) {
+      eventData.location = location;
+    }
+
+    const event = await Event.create(eventData);
 
     booking.event = event._id;
     booking.eventCreated = true;

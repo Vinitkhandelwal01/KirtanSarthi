@@ -117,7 +117,7 @@ export default function ArtistProfile() {
         >
           {[
             ["📍", artist.user?.city?.toUpperCase()],
-            ["⭐", `${avgRating || artist.rating || 0} Rating`],
+            ["⭐", `${Number(avgRating || artist.rating || 0).toFixed(1)} Rating`],
             ["✅", "Verified"],
           ].map(([icon, val]) => (
             <span
