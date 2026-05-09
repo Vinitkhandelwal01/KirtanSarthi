@@ -307,6 +307,12 @@ button.stat-card, button.card-hover { font-family:inherit; }
 .group-members-panel { min-width:0; }
 @media(max-width:860px) { .chat-layout { grid-template-columns:280px 1fr !important; } }
 @media(max-width:768px) { .chat-layout { grid-template-columns:1fr !important; height:calc(100dvh - 180px); min-height:500px; } .chat-list { display:none; } .chat-list.open { display:flex; position:absolute; inset:0; z-index:3; border-right:none; } .chat-main { border-left:none; } .chat-main.mobile-hidden { display:none; } .chat-page-shell { min-height:calc(100dvh - 96px); } .main-content.chat-page-shell { padding:1rem; } .chat-page-head { display:none; } }
+@media(max-width:860px) {
+  /* When chat list is closed and a chat is shown on mobile/tablet, ensure list stays hidden */
+  .chat-layout.mobile-show-main .chat-list { display:none !important; }
+  .chat-layout.mobile-show-main { grid-template-columns: 1fr !important; }
+  .chat-layout.mobile-show-main .chat-main { display:flex !important; position:relative; z-index:2; width:100% !important; }
+}
 .chat-list { border-right:1px solid var(--border); overflow-y:auto; display:flex; flex-direction:column; background:linear-gradient(180deg,#fffaf2 0%,#f8efe2 100%); min-height:0; }
 .chat-list-title { padding:1rem 1.1rem; border-bottom:1px solid var(--border); font-size:.78rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--brown-light); background:rgba(255,255,255,.55); }
 .chat-search-wrap { padding:.8rem 1rem; border-bottom:1px solid rgba(232,213,184,.7); background:rgba(255,255,255,.38); }
@@ -331,6 +337,8 @@ button.stat-card, button.card-hover { font-family:inherit; }
 .chat-header { padding:.95rem 1.1rem; border-bottom:1px solid rgba(232,213,184,.9); background:rgba(255,253,249,.92); display:flex; align-items:center; gap:12px; backdrop-filter:blur(10px); }
 .chat-mobile-back { display:none; border:none; background:rgba(232,101,10,.08); color:var(--saffron-deep); border-radius:999px; padding:8px 12px; font-size:.76rem; font-weight:600; }
 @media(max-width:768px) { .chat-mobile-back { display:inline-flex; } }
+.chat-mobile-back { cursor: pointer; }
+.chat-mobile-back:hover { transform:translateX(-2px); }
 .chat-header-copy { flex:1; min-width:0; }
 .chat-header-name { font-weight:600; font-size:1rem; color:var(--brown); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .chat-header-meta { font-size:.74rem; color:var(--text-muted); margin-top:1px; transition:color .18s; }

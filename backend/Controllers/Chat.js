@@ -58,25 +58,40 @@ exports.createPrivateChat = async (req, res) => {
       return res.status(404).json({ message: "Artist not found" });
     }
 
-    // find valid booking
-    const booking = await Booking.findOne({
-      user: userId,
+    // allow either user or artist to initiate chat if a valid booking exists
+    const bookingFilter = {
       artist: artist._id,
-      status: { $in: ["PENDING", "COUNTERED", "ACCEPTED", "COMPLETED"] }
-    }).sort({ createdAt: -1 });
+      status: { $in: ["PENDING", "COUNTERED", "ACCEPTED", "COMPLETED"] },
+    };
+
+    if (req.user.accountType === "ARTIST") {
+      if (artist.user?.toString() !== userId) {
+        return res.status(403).json({
+          message: "Not allowed to chat for this artist profile",
+        });
+      }
+    } else {
+      bookingFilter.user = userId;
+    }
+
+    const booking = await Booking.findOne(bookingFilter)
+      .sort({ createdAt: -1 })
+      .populate("user", "_id");
 
     if (!booking) {
       return res.status(403).json({
-        message: "You must request booking before chat"
+        message: "Chat is allowed only for booked users"
       });
     }
 
     let chat = await Chat.findOne({ booking: booking._id });
 
     if (!chat) {
+      const bookingUserId = booking.user?._id?.toString() || booking.user?.toString();
+      const artistMemberId = artist.user?.toString();
       chat = await Chat.create({
         type: "PRIVATE",
-        members: [userId, artistUserId],
+        members: [bookingUserId, artistMemberId],
         booking: booking._id
       });
 

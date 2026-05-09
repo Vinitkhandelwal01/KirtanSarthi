@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useLocation, useSearchParams } from "react-router-dom";
-import { bookingAPI } from "../../services/api";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { bookingAPI, chatAPI } from "../../services/api";
 import { statusBadge, fmtDate, initials } from "../../utils/helpers";
 import { MAX_COUNTERS } from "../../utils/constants";
 import BookingDetailModal from "../../components/common/BookingDetailModal";
@@ -21,6 +21,7 @@ const ICONS = {
 
 export default function ArtistRequests() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { t } = useLang();
   const [searchParams] = useSearchParams();
   const initialTab = (location.state?.tab || searchParams.get("tab") || "ALL").toUpperCase();
@@ -30,6 +31,7 @@ export default function ArtistRequests() {
   const [counterModal, setCounterModal] = useState(null);
   const [counterPrice, setCounterPrice] = useState("");
   const [acting, setActing] = useState(false);
+  const [msgLoading, setMsgLoading] = useState(null);
   const [detailBooking, setDetailBooking] = useState(null);
 
   useEffect(() => {
@@ -80,6 +82,25 @@ export default function ArtistRequests() {
   };
 
   const filtered = tab === "ALL" ? requests : requests.filter((r) => r.status === tab);
+
+  const messageUser = async (booking) => {
+    const artistUserId = booking?.artist?.user?._id || booking?.artist?.user;
+    if (!artistUserId) {
+      toast.error(t("artist_requests_user_info_missing"));
+      return;
+    }
+
+    setMsgLoading(booking._id);
+    try {
+      const res = await chatAPI.createPrivate({ artistUserId });
+      const chatId = res.chat?._id || res.chatId;
+      navigate(`/chat${chatId ? `?open=${chatId}` : ""}`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || t("artist_requests_chat_failed"));
+    } finally {
+      setMsgLoading(null);
+    }
+  };
 
   const tabs = [
     { key: "ALL", label: t("artist_requests_tab_all"), count: 0 },
@@ -232,6 +253,16 @@ export default function ArtistRequests() {
                     {ICONS.accept} {t("artist_requests_mark_complete")}
                   </button>
                   <span style={{ fontSize: ".78rem", color: "var(--text-muted)", fontStyle: "italic" }}>{t("artist_requests_mark_complete_help")}</span>
+                </div>
+              )}
+
+              {["ACCEPTED", "COMPLETED"].includes(b.status) && (
+                <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", gap: 8, marginTop: ".6rem" }}>
+                  <button className="btn btn-ghost btn-sm" onClick={() => messageUser(b)} disabled={msgLoading === b._id}>
+                    {msgLoading === b._id
+                      ? <><span className="spinner" style={{ width: 14, height: 14 }} /> {t("artist_requests_opening")}</>
+                      : t(b.status === "COMPLETED" ? "artist_requests_view_chat" : "artist_requests_message_user")}
+                  </button>
                 </div>
               )}
             </div>

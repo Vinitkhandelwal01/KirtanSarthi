@@ -56,6 +56,8 @@ export default function Chat() {
   const [loadingMore, setLoadingMore] = useState(false);//whether we are currently loading more messages for infinite scroll
   const [uploading, setUploading] = useState(false);// whether we are currently uploading an attachment, to disable inputs and show appropriate UI feedback
   const [mobileListOpen, setMobileListOpen] = useState(true);// on smaller screens, whether the chat list sidebar is open (true) or we are showing the active chat (false)
+  const MOBILE_BREAKPOINT = 860;
+  const [isMobileView, setIsMobileView] = useState(typeof window !== "undefined" ? window.innerWidth <= MOBILE_BREAKPOINT : false);
   const [previewImage, setPreviewImage] = useState(null);// when a user clicks on an image message, store the URL here to show it in a larger preview modal
 
   const refreshUnreadCount = useCallback(() => { // after marking messages as read or receiving new messages,
@@ -104,6 +106,12 @@ export default function Chat() {
     setActiveChat((currentActiveChat) => {
       if (openChatId && chats.some((chat) => chat._id === openChatId)) return openChatId;
       if (currentActiveChat && chats.some((chat) => chat._id === currentActiveChat)) return currentActiveChat;
+      // On small screens, don't auto-open the first chat — show chat list like WhatsApp
+      try {
+        if (typeof window !== "undefined" && window.innerWidth <= MOBILE_BREAKPOINT) return null;
+      } catch (e) {
+        // ignore
+      }
       return chats[0]?._id || null;
     });
   }, [openChatId]);
@@ -417,9 +425,9 @@ export default function Chat() {
 
   useEffect(() => {
     const onResize = () => {
-      if (window.innerWidth > 768) {
-        setMobileListOpen(true);
-      }
+      const mobile = window.innerWidth <= MOBILE_BREAKPOINT;
+      setIsMobileView(mobile);
+      if (!mobile) setMobileListOpen(true);
     };
 
     window.addEventListener("resize", onResize);
@@ -559,7 +567,7 @@ export default function Chat() {
       delete next[id];
       return next;
     });
-    if (window.innerWidth <= 768) {
+    if (window.innerWidth <= MOBILE_BREAKPOINT) {
       setMobileListOpen(false);
     }
   };
@@ -663,7 +671,7 @@ export default function Chat() {
         <p className="section-sub mb-2">Chat with your artists and groups</p>
       </div>
 
-      <div className={`chat-layout${isGroup && showMembers ? " has-members" : ""}`}>
+      <div className={`chat-layout${isGroup && showMembers ? " has-members" : ""} ${isMobileView && !mobileListOpen ? "mobile-show-main" : ""}`}>
         <div className={`chat-list${mobileListOpen ? " open" : ""}`}>
           <div className="chat-list-title">{t("messages")}</div>
           <div className="chat-search-wrap">
