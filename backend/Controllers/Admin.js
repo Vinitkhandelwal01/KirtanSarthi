@@ -167,7 +167,8 @@ exports.suspendArtist = async (req, res) => {
     }
 
     if (artist.user?.email) {
-      await mailSender(
+      // send email in background so HTTP response isn't blocked by mail network latency
+      mailSender(
         artist.user.email,
         "Artist Account Suspended ⚠️",
         `
@@ -176,7 +177,9 @@ exports.suspendArtist = async (req, res) => {
           <p><strong>Reason:</strong> ${reason}</p>
           <p>If you believe this is a mistake, please contact our support team at <a href="mailto:info@KirtanSarthi.com">info@KirtanSarthi.com</a>. We are here to help!.</p>
         `
-      );
+      )
+        .then((info) => console.log("suspend email sent", info && info.messageId))
+        .catch((err) => console.error("suspend email error:", err && err.message));
     }
 
     return res.status(200).json({
@@ -226,7 +229,7 @@ exports.reactivateArtist = async (req, res) => {
     }
 
     if (artist.user?.email) {
-      await mailSender(
+      mailSender(
         artist.user.email,
         "Artist Account Reactivated 🎉",
         `
