@@ -167,19 +167,21 @@ exports.suspendArtist = async (req, res) => {
     }
 
     if (artist.user?.email) {
-      // send email in background so HTTP response isn't blocked by mail network latency
-      mailSender(
-        artist.user.email,
-        "Artist Account Suspended ⚠️",
-        `
-          <h3>Account Suspended</h3>
-          <p>Your artist account on KirtanSarthi has been suspended.</p>
-          <p><strong>Reason:</strong> ${reason}</p>
-          <p>If you believe this is a mistake, please contact our support team at <a href="mailto:info@KirtanSarthi.com">info@KirtanSarthi.com</a>. We are here to help!.</p>
-        `
-      )
-        .then((info) => console.log("suspend email sent", info && info.messageId))
-        .catch((err) => console.error("suspend email error:", err && err.message));
+      try {
+        const info = await mailSender(
+          artist.user.email,
+          "Artist Account Suspended ⚠️",
+          `
+            <h3>Account Suspended</h3>
+            <p>Your artist account on KirtanSarthi has been suspended.</p>
+            <p><strong>Reason:</strong> ${reason}</p>
+            <p>If you believe this is a mistake, please contact our support team at <a href="mailto:info@KirtanSarthi.com">info@KirtanSarthi.com</a>. We are here to help!.</p>
+          `
+        );
+        console.log("suspend email sent", info && info.messageId);
+      } catch (mailError) {
+        console.error("suspend email error:", mailError && mailError.message);
+      }
     }
 
     return res.status(200).json({
@@ -229,15 +231,19 @@ exports.reactivateArtist = async (req, res) => {
     }
 
     if (artist.user?.email) {
-      mailSender(
-        artist.user.email,
-        "Artist Account Reactivated 🎉",
-        `
-          <h3>Account Reactivated!</h3>
-          <p>Your artist account on KirtanSarthi has been reactivated.</p>
-          <p>You can now receive bookings again. Welcome back!</p>
-        `
-      );
+      try {
+        await mailSender(
+          artist.user.email,
+          "Artist Account Reactivated 🎉",
+          `
+            <h3>Account Reactivated!</h3>
+            <p>Your artist account on KirtanSarthi has been reactivated.</p>
+            <p>You can now receive bookings again. Welcome back!</p>
+          `
+        );
+      } catch (mailError) {
+        console.error("reactivation email error:", mailError && mailError.message);
+      }
     }
 
     return res.status(200).json({

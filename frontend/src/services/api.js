@@ -10,7 +10,7 @@ const normalizeApiBaseUrl = (rawValue) => {
   // "REACT_APP_BASE_URL=https://example.com/api/v1"
   if (value.startsWith("REACT_APP_BASE_URL=")) {
     value = value.slice("REACT_APP_BASE_URL=".length).trim();
-  }
+  }  
 
   if (!value) return fallback;
 

@@ -80,7 +80,8 @@ export default function ContactUs() {
       setSent(true);
       toast.success(t("contact_success_toast"));
     } catch (err) {
-      toast.error(err?.message || t("contact_error_toast"));
+      const serverMessage = err?.response?.data?.message;
+      toast.error(serverMessage || err?.message || t("contact_error_toast"));
     } finally {
       setSending(false);
     }
