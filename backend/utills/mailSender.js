@@ -1,6 +1,40 @@
 const nodemailer = require("nodemailer");
 require("dotenv").config();
 
+const normalizeMailFrom = (fallbackFrom) => String(process.env.MAIL_FROM || fallbackFrom);
+
+const sendViaResend = async (email, title, body) => {
+    if (!process.env.RESEND_API_KEY) {
+        throw new Error("Missing RESEND_API_KEY environment variable");
+    }
+
+    const from = normalizeMailFrom(`KirtanSarthi <${process.env.MAIL_USER}>`);
+    const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            from,
+            to: [email],
+            subject: title,
+            html: body,
+        }),
+    });
+
+    const responseText = await response.text();
+    if (!response.ok) {
+        throw new Error(`Resend API error: ${response.status} ${responseText}`);
+    }
+
+    return {
+        messageId: `resend:${Date.now()}`,
+        response: responseText,
+        envelope: { from, to: [email] },
+    };
+};
+
 const buildTransportConfig = () => {
     if (process.env.MAIL_SERVICE) {
         return {
@@ -41,6 +75,19 @@ const buildTransportConfig = () => {
 
 const mailSender = async (email, title, body) => {
     try {
+        const mailProvider = String(process.env.MAIL_PROVIDER || "smtp").toLowerCase();
+
+        if (mailProvider === "resend" || process.env.RESEND_API_KEY) {
+            const info = await sendViaResend(email, title, body);
+            console.log("mailSender success:", {
+                provider: "resend",
+                messageId: info?.messageId,
+                response: info?.response,
+                envelope: info?.envelope,
+            });
+            return info;
+        }
+
         if (!process.env.MAIL_USER || !process.env.MAIL_PASS) {
             throw new Error("Missing MAIL_USER/MAIL_PASS environment variables");
         }
@@ -49,7 +96,7 @@ const mailSender = async (email, title, body) => {
             throw new Error("Missing MAIL_HOST or MAIL_SERVICE environment variable");
         }
 
-        const mailFrom = process.env.MAIL_FROM || `"KirtanSarthi" <${process.env.MAIL_USER}>`;
+        const mailFrom = normalizeMailFrom(`"KirtanSarthi" <${process.env.MAIL_USER}>`);
         const transporter = nodemailer.createTransport(buildTransportConfig());
 
         console.log("mailSender transport config:", {
@@ -68,6 +115,7 @@ const mailSender = async (email, title, body) => {
         });
 
         console.log("mailSender success:", {
+            provider: "smtp",
             messageId: info?.messageId,
             response: info?.response,
             envelope: info?.envelope,
