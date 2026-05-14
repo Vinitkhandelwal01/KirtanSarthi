@@ -37,7 +37,7 @@ const sendViaBrevo = async (email, title, body, replyTo) => {
             to: [{ email }],
             subject: title,
             htmlContent: body,
-            ...(replyTo ? { replyTo } : {}),
+            ...(replyTo ? { replyTo: { email: replyTo } } : {}),
         }),
     });
 
