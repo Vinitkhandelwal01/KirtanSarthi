@@ -47,7 +47,8 @@ exports.contactUsController = async (req, res) => {
     const emailRes = await mailSender(
       email,
       "Your Data send successfully",
-      contactUsEmail(email, firstName, lastName, message, phone ? normalizePhone(phone) : "")
+      contactUsEmail(email, firstName, lastName, message, phone ? normalizePhone(phone) : ""),
+      { replyTo: email }
     )
     console.log("Email Res ", emailRes)
     return res.json({

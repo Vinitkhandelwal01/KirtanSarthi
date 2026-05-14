@@ -18,7 +18,7 @@ const parseSender = (mailFrom, fallbackEmail) => {
     };
 };
 
-const sendViaBrevo = async (email, title, body) => {
+const sendViaBrevo = async (email, title, body, replyTo) => {
     if (!process.env.BREVO_API_KEY) {
         throw new Error("Missing BREVO_API_KEY environment variable");
     }
@@ -37,6 +37,7 @@ const sendViaBrevo = async (email, title, body) => {
             to: [{ email }],
             subject: title,
             htmlContent: body,
+            ...(replyTo ? { replyTo } : {}),
         }),
     });
 
@@ -90,12 +91,13 @@ const buildTransportConfig = () => {
     };
 };
 
-const mailSender = async (email, title, body) => {
+const mailSender = async (email, title, body, options = {}) => {
     try {
         const mailProvider = String(process.env.MAIL_PROVIDER || "smtp").toLowerCase();
+        const replyTo = options.replyTo ? String(options.replyTo).trim() : "";
 
         if (mailProvider === "brevo" || process.env.BREVO_API_KEY) {
-            const info = await sendViaBrevo(email, title, body);
+            const info = await sendViaBrevo(email, title, body, replyTo);
             console.log("mailSender success:", {
                 provider: "brevo",
                 messageId: info?.messageId,
@@ -129,6 +131,7 @@ const mailSender = async (email, title, body) => {
             to: `${email}`,
             subject: `${title}`,
             html: `${body}`,
+            ...(replyTo ? { replyTo } : {}),
         });
 
         console.log("mailSender success:", {
