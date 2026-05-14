@@ -3,35 +3,52 @@ require("dotenv").config();
 
 const normalizeMailFrom = (fallbackFrom) => String(process.env.MAIL_FROM || fallbackFrom);
 
-const sendViaResend = async (email, title, body) => {
-    if (!process.env.RESEND_API_KEY) {
-        throw new Error("Missing RESEND_API_KEY environment variable");
+const parseSender = (mailFrom, fallbackEmail) => {
+    const from = String(mailFrom || "").trim();
+    const match = from.match(/^(?:\"?([^\"]*)\"?\s*)?<([^>]+)>$/);
+    if (match) {
+        const senderName = (match[1] || "KirtanSarthi").trim() || "KirtanSarthi";
+        const senderEmail = (match[2] || fallbackEmail).trim();
+        return { name: senderName, email: senderEmail };
     }
 
-    const from = normalizeMailFrom(`KirtanSarthi <${process.env.MAIL_USER}>`);
-    const response = await fetch("https://api.resend.com/emails", {
+    return {
+        name: "KirtanSarthi",
+        email: String(fallbackEmail || from).trim(),
+    };
+};
+
+const sendViaBrevo = async (email, title, body) => {
+    if (!process.env.BREVO_API_KEY) {
+        throw new Error("Missing BREVO_API_KEY environment variable");
+    }
+
+    const from = normalizeMailFrom(`\"KirtanSarthi\" <${process.env.MAIL_USER}>`);
+    const sender = parseSender(from, process.env.MAIL_USER);
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
         headers: {
-            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+            "api-key": process.env.BREVO_API_KEY,
+            accept: "application/json",
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            from,
-            to: [email],
+            sender,
+            to: [{ email }],
             subject: title,
-            html: body,
+            htmlContent: body,
         }),
     });
 
     const responseText = await response.text();
     if (!response.ok) {
-        throw new Error(`Resend API error: ${response.status} ${responseText}`);
+        throw new Error(`Brevo API error: ${response.status} ${responseText}`);
     }
 
     return {
-        messageId: `resend:${Date.now()}`,
+        messageId: `brevo:${Date.now()}`,
         response: responseText,
-        envelope: { from, to: [email] },
+        envelope: { from: sender.email, to: [email] },
     };
 };
 
@@ -77,10 +94,10 @@ const mailSender = async (email, title, body) => {
     try {
         const mailProvider = String(process.env.MAIL_PROVIDER || "smtp").toLowerCase();
 
-        if (mailProvider === "resend" || process.env.RESEND_API_KEY) {
-            const info = await sendViaResend(email, title, body);
+        if (mailProvider === "brevo" || process.env.BREVO_API_KEY) {
+            const info = await sendViaBrevo(email, title, body);
             console.log("mailSender success:", {
-                provider: "resend",
+                provider: "brevo",
                 messageId: info?.messageId,
                 response: info?.response,
                 envelope: info?.envelope,
