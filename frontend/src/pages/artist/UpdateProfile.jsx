@@ -9,6 +9,7 @@ import useLang from "../../hooks/useLang";
 import { isValidCity, isValidPhone, isValidYouTubeUrl, normalizePhone } from "../../utils/validation";
 
 export default function ArtistUpdateProfile() {
+  const OTHER_OPTION = "__other__";
   const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
   const { t } = useLang();
@@ -23,6 +24,8 @@ export default function ArtistUpdateProfile() {
     gender: user?.gender || "",
   });
   const setP = (k, v) => setPersonal((p) => ({ ...p, [k]: v }));
+  const genderSelectValue =
+    personal.gender === "" || personal.gender === "Male" || personal.gender === "Female" ? personal.gender : OTHER_OPTION;
 
   const [artist, setArtist] = useState({
     artistType: "SOLO",
@@ -254,12 +257,31 @@ export default function ArtistUpdateProfile() {
             </div>
             <div className="form-group mb-3">
               <label className="form-label">{t("update_profile_gender")}</label>
-              <select className="form-input form-select" value={personal.gender} onChange={(e) => setP("gender", e.target.value)}>
+              <select
+                className="form-input form-select"
+                value={genderSelectValue}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === OTHER_OPTION) {
+                    setP("gender", "");
+                    return;
+                  }
+                  setP("gender", value);
+                }}
+              >
                 <option value="">{t("update_profile_gender_prefer_not_say")}</option>
                 <option value="Male">{t("update_profile_gender_male")}</option>
                 <option value="Female">{t("update_profile_gender_female")}</option>
-                <option value="Other">{t("update_profile_gender_other")}</option>
+                <option value={OTHER_OPTION}>{t("update_profile_gender_other")}</option>
               </select>
+              {genderSelectValue === OTHER_OPTION && (
+                <input
+                  className="form-input mt-2"
+                  value={personal.gender}
+                  onChange={(e) => setP("gender", e.target.value)}
+                  placeholder="Type gender"
+                />
+              )}
             </div>
             <button className="btn btn-primary" onClick={savePersonal} disabled={loading}>
               {loading ? <><span className="spinner" /> {t("artist_update_saving")}</> : `${"\u{1F4BE}"} ${t("artist_update_save_personal")}`}

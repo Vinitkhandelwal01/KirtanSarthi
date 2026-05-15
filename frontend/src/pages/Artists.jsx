@@ -6,12 +6,15 @@ import { GODS_LIST, EVENT_TYPES } from "../utils/constants";
 import useLang from "../hooks/useLang";
 
 export default function Artists() {
+  const OTHER_OPTION = "__other__";
   const navigate = useNavigate();
   const { t } = useLang();
   const [query, setQuery] = useState("");
   const [city, setCity] = useState("");
   const [god, setGod] = useState("");
   const [eventType, setEventType] = useState("");
+  const [godOther, setGodOther] = useState("");
+  const [eventTypeOther, setEventTypeOther] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [minRating, setMinRating] = useState("");
   const [artists, setArtists] = useState([]);
@@ -24,7 +27,11 @@ export default function Artists() {
     setEventType("");
     setMaxPrice("");
     setMinRating("");
+    setGodOther("");
+    setEventTypeOther("");
   };
+  const godSelectValue = god ? (GODS_LIST.includes(god) ? god : OTHER_OPTION) : "";
+  const eventTypeSelectValue = eventType ? (EVENT_TYPES.includes(eventType) ? eventType : OTHER_OPTION) : "";
 
   useEffect(() => {
     setLoading(true);
@@ -109,8 +116,16 @@ export default function Artists() {
               <label className="form-label">{t("deity")}</label>
               <select
                 className="form-input form-select"
-                value={god}
-                onChange={(e) => setGod(e.target.value)}
+                value={godSelectValue}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === OTHER_OPTION) {
+                    setGod(godOther);
+                    return;
+                  }
+                  setGod(value);
+                  setGodOther("");
+                }}
               >
                 <option value="">{t("all")}</option>
                 {GODS_LIST.map((g) => (
@@ -118,14 +133,34 @@ export default function Artists() {
                     {g}
                   </option>
                 ))}
+                <option value={OTHER_OPTION}>Other</option>
               </select>
+              {godSelectValue === OTHER_OPTION && (
+                <input
+                  className="form-input mt-2"
+                  placeholder="Type deity name"
+                  value={godOther}
+                  onChange={(e) => {
+                    setGodOther(e.target.value);
+                    setGod(e.target.value);
+                  }}
+                />
+              )}
             </div>
             <div className="form-group mb-2">
               <label className="form-label">{t("event_type")}</label>
               <select
                 className="form-input form-select"
-                value={eventType}
-                onChange={(e) => setEventType(e.target.value)}
+                value={eventTypeSelectValue}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === OTHER_OPTION) {
+                    setEventType(eventTypeOther);
+                    return;
+                  }
+                  setEventType(value);
+                  setEventTypeOther("");
+                }}
               >
                 <option value="">{t("all")}</option>
                 {EVENT_TYPES.map((item) => (
@@ -133,7 +168,19 @@ export default function Artists() {
                     {item}
                   </option>
                 ))}
+                <option value={OTHER_OPTION}>Other</option>
               </select>
+              {eventTypeSelectValue === OTHER_OPTION && (
+                <input
+                  className="form-input mt-2"
+                  placeholder="Type event type"
+                  value={eventTypeOther}
+                  onChange={(e) => {
+                    setEventTypeOther(e.target.value);
+                    setEventType(e.target.value);
+                  }}
+                />
+              )}
             </div>
             <div className="form-group mb-2">
               <label className="form-label">{t("max_price")}</label>

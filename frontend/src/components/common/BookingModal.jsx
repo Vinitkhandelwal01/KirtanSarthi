@@ -12,6 +12,7 @@ import {
 } from "../../utils/constants";
 
 export default function BookingModal({ artist, onClose, onSuccess }) {
+  const OTHER_OPTION = "__other__";
   const navigate = useNavigate();
   const { user, refreshUser } = useAuth();
   const { t } = useLang();
@@ -39,6 +40,8 @@ export default function BookingModal({ artist, onClose, onSuccess }) {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const evTypeSelectValue = EVENT_TYPES.includes(form.evType) ? form.evType : OTHER_OPTION;
+  const evGodSelectValue = GODS_LIST.includes(form.evGod) ? form.evGod : OTHER_OPTION;
 
   const set = (k, v) => {
     setF((p) => ({ ...p, [k]: v }));
@@ -454,25 +457,57 @@ export default function BookingModal({ artist, onClose, onSuccess }) {
                 <label className="form-label">{t("event_type")}</label>
                 <select
                   className="form-input form-select"
-                  value={form.evType}
-                  onChange={(e) => set("evType", e.target.value)}
+                  value={evTypeSelectValue}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === OTHER_OPTION) {
+                      set("evType", "");
+                      return;
+                    }
+                    set("evType", value);
+                  }}
                 >
                   {EVENT_TYPES.map((et) => (
                     <option key={et}>{et}</option>
                   ))}
+                  <option value={OTHER_OPTION}>Other</option>
                 </select>
+                {evTypeSelectValue === OTHER_OPTION && (
+                  <input
+                    className="form-input mt-2"
+                    value={form.evType}
+                    onChange={(e) => set("evType", e.target.value)}
+                    placeholder="Type event type"
+                  />
+                )}
               </div>
               <div className="form-group">
                 <label className="form-label">{t("deity")}</label>
                 <select
                   className="form-input form-select"
-                  value={form.evGod}
-                  onChange={(e) => set("evGod", e.target.value)}
+                  value={evGodSelectValue}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === OTHER_OPTION) {
+                      set("evGod", "");
+                      return;
+                    }
+                    set("evGod", value);
+                  }}
                 >
                   {GODS_LIST.map((g) => (
                     <option key={g}>{g}</option>
                   ))}
+                  <option value={OTHER_OPTION}>Other</option>
                 </select>
+                {evGodSelectValue === OTHER_OPTION && (
+                  <input
+                    className="form-input mt-2"
+                    value={form.evGod}
+                    onChange={(e) => set("evGod", e.target.value)}
+                    placeholder="Type deity name"
+                  />
+                )}
               </div>
             </div>
             <div className="form-group mb-2 mt-2">

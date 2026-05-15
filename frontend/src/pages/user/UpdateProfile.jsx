@@ -10,6 +10,7 @@ import useLang from "../../hooks/useLang";
 import { isValidCity, isValidPhone, normalizePhone } from "../../utils/validation";
 
 export default function UpdateProfile() {
+  const OTHER_OPTION = "__other__";
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { t } = useLang();
@@ -26,6 +27,8 @@ export default function UpdateProfile() {
 
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
   const setPw = (k, v) => setPwForm((p) => ({ ...p, [k]: v }));
+  const genderSelectValue =
+    form.gender === "" || form.gender === "Male" || form.gender === "Female" ? form.gender : OTHER_OPTION;
 
   const saveProfile = async () => {
     if (form.phone && !isValidPhone(form.phone)) {
@@ -208,12 +211,31 @@ export default function UpdateProfile() {
             </div>
             <div className="form-group mb-3">
               <label className="form-label">{t("update_profile_gender")}</label>
-              <select className="form-input form-select" value={form.gender} onChange={(e) => set("gender", e.target.value)}>
+              <select
+                className="form-input form-select"
+                value={genderSelectValue}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === OTHER_OPTION) {
+                    set("gender", "");
+                    return;
+                  }
+                  set("gender", value);
+                }}
+              >
                 <option value="">{t("update_profile_gender_prefer_not_say")}</option>
                 <option value="Male">{t("update_profile_gender_male")}</option>
                 <option value="Female">{t("update_profile_gender_female")}</option>
-                <option value="Other">{t("update_profile_gender_other")}</option>
+                <option value={OTHER_OPTION}>{t("update_profile_gender_other")}</option>
               </select>
+              {genderSelectValue === OTHER_OPTION && (
+                <input
+                  className="form-input mt-2"
+                  value={form.gender}
+                  onChange={(e) => set("gender", e.target.value)}
+                  placeholder="Type gender"
+                />
+              )}
             </div>
             <div style={{ display: "flex", gap: 10 }}>
               <button className="btn btn-primary" onClick={saveProfile} disabled={loading}>

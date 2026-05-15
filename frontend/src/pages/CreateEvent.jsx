@@ -7,6 +7,7 @@ import { EVENT_TYPES, GODS_LIST, VISIBILITY_OPTS } from "../utils/constants";
 import toast from "react-hot-toast";
 
 export default function CreateEvent() {
+  const OTHER_OPTION = "__other__";
   const { id } = useParams();
   const isEditMode = Boolean(id);
   const navigate = useNavigate();
@@ -29,6 +30,8 @@ export default function CreateEvent() {
   });
 
   const set = (k, v) => setForm((prev) => ({ ...prev, [k]: v }));
+  const eventTypeSelectValue = EVENT_TYPES.includes(form.eventType) ? form.eventType : OTHER_OPTION;
+  const godSelectValue = GODS_LIST.includes(form.god) ? form.god : OTHER_OPTION;
 
   useEffect(() => {
     if (!isEditMode) return;
@@ -152,25 +155,57 @@ export default function CreateEvent() {
                   <label className="form-label">{t("event_type")}</label>
                   <select
                     className="form-input form-select"
-                    value={form.eventType}
-                    onChange={(e) => set("eventType", e.target.value)}
+                    value={eventTypeSelectValue}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === OTHER_OPTION) {
+                        set("eventType", "");
+                        return;
+                      }
+                      set("eventType", value);
+                    }}
                   >
                     {EVENT_TYPES.map((et) => (
                       <option key={et}>{et}</option>
                     ))}
+                    <option value={OTHER_OPTION}>Other</option>
                   </select>
+                  {eventTypeSelectValue === OTHER_OPTION && (
+                    <input
+                      className="form-input mt-2"
+                      value={form.eventType}
+                      onChange={(e) => set("eventType", e.target.value)}
+                      placeholder="Type event type"
+                    />
+                  )}
                 </div>
                 <div className="form-group mb-2">
                   <label className="form-label">{t("deity")}</label>
                   <select
                     className="form-input form-select"
-                    value={form.god}
-                    onChange={(e) => set("god", e.target.value)}
+                    value={godSelectValue}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === OTHER_OPTION) {
+                        set("god", "");
+                        return;
+                      }
+                      set("god", value);
+                    }}
                   >
                     {GODS_LIST.map((g) => (
                       <option key={g}>{g}</option>
                     ))}
+                    <option value={OTHER_OPTION}>Other</option>
                   </select>
+                  {godSelectValue === OTHER_OPTION && (
+                    <input
+                      className="form-input mt-2"
+                      value={form.god}
+                      onChange={(e) => set("god", e.target.value)}
+                      placeholder="Type deity name"
+                    />
+                  )}
                 </div>
               </div>
               {!isEditMode && (
